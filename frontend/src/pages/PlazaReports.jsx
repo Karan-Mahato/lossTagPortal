@@ -1,88 +1,69 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { AppShell } from '../components/layout/AppShell.jsx';
-import { Button } from '../components/ui/Button.jsx';
 import { DataTable } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
 import { StatusPill } from '../components/ui/Pill.jsx';
+import { Button } from '../components/ui/Button.jsx';
 import { Modal } from '../components/ui/Modal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 
-function BankDashboard() {
+export default function PlazaReports() {
   const user = JSON.parse(localStorage.getItem('fastag_user'));
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionState, setActionState] = useState({}); // { [complaintId]: {status, reason} }
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
   const [page, setPage] = useState(1);
-  const pageSize = 7;
   const [selected, setSelected] = useState(null);
-  const notifications = useNotifications({ role: 'bank', userId: user?.id });
+  const pageSize = 7;
+  const notifications = useNotifications({ role: 'plaza', userId: user?.id });
 
   useEffect(() => {
+    const fetchComplaints = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?plaza_id=${user.id}`);
+        setComplaints(res.data || []);
+      } catch {
+        setComplaints([]);
+      }
+      setLoading(false);
+    };
     fetchComplaints();
-    // eslint-disable-next-line
-  }, []);
+  }, [user.id]);
 
-  const fetchComplaints = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?bank_id=${user.id}`);
-      setComplaints(res.data || []);
-    } catch (err) {
-      setComplaints([]);
-    }
-    setLoading(false);
-  };
+  const sidebarItems = [
+    { label: 'Submit Complaint', icon: 'plus', to: '/plaza/submit' },
+    { label: 'Reports', icon: 'report', to: '/plaza/reports' },
+  ];
 
-  const handleAction = async (complaintId, status, reason) => {
-    if ((status === 'Fined' || status === 'Blocked') && !reason.trim()) {
-      alert('Please provide a reason for this action.');
-      return;
-    }
-    await axios.patch(
-      `${import.meta.env.VITE_API_URL}/complaints/${complaintId}`,
-      { status, bank_action_reason: reason }
-    );
-    fetchComplaints();
-  };
+  const filtered = useMemo(() => {
+    return complaints
+      .filter((c) => (status === 'All' ? true : c.status === status))
+      .filter((c) => {
+        const q = query.trim().toLowerCase();
+        if (!q) return true;
+        const hay = [c.case_id, c.fastag_id, c.vrn, c.lane_id, c.issuer_banks?.name]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      });
+  }, [complaints, query, status]);
 
-  const filtered = complaints
-    .filter((c) => {
-      if (status === 'All') return true;
-      return c.status === status;
-    })
-    .filter((c) => {
-      const q = query.trim().toLowerCase();
-      if (!q) return true;
-      const hay = [
-        c.case_id,
-        c.fastag_id,
-        c.vrn,
-        c.toll_plazas?.name,
-        c.issuer_banks?.name,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return hay.includes(q);
-    });
+  useEffect(() => setPage(1), [query, status]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const clampedPage = Math.min(page, pageCount);
   const pageRows = filtered.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
 
-  useEffect(() => {
-    setPage(1);
-  }, [query, status]);
-
   const columns = [
     { key: 'case', header: 'Case ID', cell: (c) => <span className="font-mono">{c.case_id}</span> },
     { key: 'fastag', header: 'FASTag ID', cell: (c) => <span className="font-mono">{c.fastag_id}</span> },
     { key: 'vrn', header: 'VRN', cell: (c) => <span className="font-mono">{c.vrn}</span> },
-    { key: 'plaza', header: 'Toll Plaza', cell: (c) => c.toll_plazas?.name || '—' },
     { key: 'lane', header: 'Lane', cell: (c) => <span className="font-mono">{c.lane_id}</span> },
+    { key: 'bank', header: 'Assigned Bank', cell: (c) => c.issuer_banks?.name || 'Unmapped' },
     { key: 'status', header: 'Status', cell: (c) => <StatusPill status={c.status} /> },
     {
       key: 'view',
@@ -96,29 +77,24 @@ function BankDashboard() {
     },
   ];
 
-  const selectedAction = selected ? actionState[selected.id] : null;
-  const selectedStatus = selectedAction?.status ?? '';
-  const selectedReason = selectedAction?.reason ?? '';
-  const canAct = selected?.status === 'Pending';
-
   return (
     <AppShell
-      activeSidebarLabel="Complaints"
-      userName={user?.label?.replace('—', '').trim() || 'Bank'}
-      subtitle="Review assigned complaints and take action."
-      sidebarItems={[{ label: 'Reports', icon: 'report', to: '/bank' }]}
+      activeSidebarLabel="Reports"
+      userName={user?.label?.split('—')?.[0]?.trim() || 'Toll Plaza'}
+      subtitle="View submitted complaints and their status."
+      sidebarItems={sidebarItems}
       topbar={{ showNotifications: true, showCalendar: true }}
       notifications={notifications}
     >
-      <section className="stl-panel" aria-label="Complaints table">
+      <section className="stl-panel" aria-label="Reports table">
         <div className="stl-panel__header">
-          <div className="stl-panel__title">Complaints</div>
+          <div className="stl-panel__title">Reports</div>
           <div className="stl-panel__toolbar">
             <input
               className="stl-input"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by Case ID / FASTag / VRN / Plaza"
+              placeholder="Search by Case ID / FASTag / VRN"
             />
             <select className="stl-select" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="All">Status</option>
@@ -140,7 +116,7 @@ function BankDashboard() {
               columns={columns}
               rows={pageRows}
               rowKey={(c) => c.id}
-              gridTemplateColumns="150px 190px 120px 1fr 90px 120px 90px"
+              gridTemplateColumns="160px 220px 140px 110px 1fr 130px 100px"
               emptyText="No complaints found."
             />
             <Pagination page={clampedPage} pageCount={pageCount} onChange={setPage} />
@@ -163,48 +139,9 @@ function BankDashboard() {
                   </span>
                 ) : null}
               </div>
-
-              {canAct ? (
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <select
-                    className="stl-select"
-                    value={selectedStatus}
-                    onChange={(e) =>
-                      setActionState((s) => ({ ...s, [selected.id]: { ...s[selected.id], status: e.target.value } }))
-                    }
-                    aria-label="Select action"
-                  >
-                    <option value="">Select action</option>
-                    <option value="Fined">Fine</option>
-                    <option value="Blocked">Block</option>
-                    <option value="No Issue">No Issue</option>
-                  </select>
-                  {(selectedStatus === 'Fined' || selectedStatus === 'Blocked') ? (
-                    <input
-                      className="stl-input"
-                      value={selectedReason}
-                      onChange={(e) =>
-                        setActionState((s) => ({ ...s, [selected.id]: { ...s[selected.id], reason: e.target.value } }))
-                      }
-                      placeholder="Reason"
-                      aria-label="Action reason"
-                    />
-                  ) : null}
-                  <Button
-                    onClick={async () => {
-                      await handleAction(selected.id, selectedStatus, selectedReason);
-                      setSelected(null);
-                    }}
-                    disabled={!selectedStatus}
-                  >
-                    Submit
-                  </Button>
-                </div>
-              ) : (
-                <div style={{ fontSize: 12.5, color: 'rgba(16,18,23,0.55)', fontWeight: 700 }}>
-                  Action already taken
-                </div>
-              )}
+              <div style={{ fontSize: 12.5, color: 'rgba(16,18,23,0.55)', fontWeight: 700 }}>
+                Assigned bank: {selected.issuer_banks?.name || 'Unmapped'}
+              </div>
             </div>
           ) : null
         }
@@ -225,9 +162,6 @@ function BankDashboard() {
 
               <div className="stl-kv__k">VRN</div>
               <div className="stl-kv__v font-mono">{selected.vrn}</div>
-
-              <div className="stl-kv__k">Toll Plaza</div>
-              <div className="stl-kv__v">{selected.toll_plazas?.name || '—'}</div>
 
               <div className="stl-kv__k">Lane</div>
               <div className="stl-kv__v font-mono">{selected.lane_id}</div>
@@ -250,4 +184,3 @@ function BankDashboard() {
   );
 }
 
-export default BankDashboard;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button.jsx';
 
 // Replace each UUID with the actual value from your Supabase Table Editor
 const DEMO_USERS = [
@@ -18,26 +19,50 @@ export default function Login() {
 
   const handleLogin = () => {
     localStorage.setItem('fastag_user', JSON.stringify(selected));
-    console.log('Logging in as', selected);
-    if (selected.role === 'plaza') navigate('/plaza');
+    if (selected.role === 'plaza') navigate('/plaza/reports');
     if (selected.role === 'bank')  navigate('/bank');
     if (selected.role === 'admin') navigate('/ihmcl');
     window.location.reload();       //update this logic for production - this is just to ensure all components re-read the user from localStorage
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '100px auto', fontFamily: 'Arial' }}>
-      <h2>FASTag Portal — Login</h2>
-      <select
-        value={selected.label}
-        onChange={e => setSelected(DEMO_USERS.find(u => u.label === e.target.value))}
-        style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
+    <div className="stl-app" style={{ display: 'grid', placeItems: 'center' }}>
+      <div
+        className="stl-panel"
+        style={{
+          width: 'min(520px, 92vw)',
+          padding: 22,
+          borderRadius: 28,
+        }}
       >
-        {DEMO_USERS.map(u => <option key={u.label}>{u.label}</option>)}
-      </select>
-      <button onClick={handleLogin} style={{ width: '100%', padding: '10px' }}>
-        Login
-      </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <div className="stl-brand-mark" aria-hidden="true">
+            <span className="stl-star" />
+          </div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' }}>FASTag Portal</div>
+            <div className="stl-subtitle">Choose a role to preview the dashboards.</div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
+          <select
+            className="stl-select"
+            value={selected.label}
+            onChange={(e) => setSelected(DEMO_USERS.find((u) => u.label === e.target.value))}
+            aria-label="Select demo user"
+            style={{ height: 40 }}
+          >
+            {DEMO_USERS.map((u) => (
+              <option key={u.label}>{u.label}</option>
+            ))}
+          </select>
+
+          <Button onClick={handleLogin} style={{ height: 40, justifyContent: 'center' }}>
+            Login
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
