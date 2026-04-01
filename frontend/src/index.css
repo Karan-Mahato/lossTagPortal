@@ -304,6 +304,10 @@ body {
   gap: 10px;
 }
 
+.stl-panel__toolbar--wrap {
+  flex-wrap: wrap;
+}
+
 .stl-input,
 .stl-select {
   height: 34px;
@@ -402,6 +406,94 @@ body {
   pointer-events: none;
 }
 
+/* Dashboard metrics */
+.stl-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stl-metric {
+  border-radius: 16px;
+  border: 1px solid rgba(16, 18, 23, 0.06);
+  background: rgba(255, 255, 255, 0.62);
+  padding: 12px 14px;
+  min-height: 86px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stl-metric__k {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(16, 18, 23, 0.55);
+}
+
+.stl-metric__v {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: rgba(16, 18, 23, 0.82);
+}
+
+.stl-subpanel {
+  margin-top: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(16, 18, 23, 0.06);
+  background: rgba(255, 255, 255, 0.58);
+  padding: 10px;
+}
+
+.stl-subpanel__title {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(16, 18, 23, 0.7);
+  padding: 6px 8px 10px;
+}
+
+.stl-mini-table {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 18, 23, 0.06);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.stl-mini-head,
+.stl-mini-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr 1.1fr;
+  gap: 0;
+  align-items: center;
+}
+
+.stl-mini-head {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.stl-mini-head > div {
+  padding: 9px 10px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: rgba(16, 18, 23, 0.56);
+}
+
+.stl-mini-row {
+  border-top: 1px solid rgba(16, 18, 23, 0.06);
+}
+
+.stl-mini-row > div {
+  padding: 9px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(16, 18, 23, 0.72);
+}
+
+.stl-mini-table--4 .stl-mini-head,
+.stl-mini-table--4 .stl-mini-row {
+  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
+}
+
 /* Notifications */
 .stl-notif {
   width: 100%;
@@ -470,7 +562,12 @@ body {
 }
 
 @media (max-width: 980px) {
+  .stl-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stl-grid-2x2 { grid-template-columns: 1fr; }
+  .stl-mini-head,
+  .stl-mini-row { grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr; }
+  .stl-mini-head > div:last-child,
+  .stl-mini-row > div:last-child { display: none; }
 }
 
 .stl-btn {

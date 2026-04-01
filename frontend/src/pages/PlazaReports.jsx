@@ -34,6 +34,7 @@ export default function PlazaReports() {
   }, [user.id]);
 
   const sidebarItems = [
+    { label: 'Dashboard', icon: 'grid', to: '/plaza/dashboard' },
     { label: 'Submit Complaint', icon: 'plus', to: '/plaza/submit' },
     { label: 'Reports', icon: 'report', to: '/plaza/reports' },
   ];

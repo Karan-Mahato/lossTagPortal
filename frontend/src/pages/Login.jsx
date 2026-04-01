@@ -19,9 +19,9 @@ export default function Login() {
 
   const handleLogin = () => {
     localStorage.setItem('fastag_user', JSON.stringify(selected));
-    if (selected.role === 'plaza') navigate('/plaza/reports');
-    if (selected.role === 'bank')  navigate('/bank');
-    if (selected.role === 'admin') navigate('/ihmcl');
+    if (selected.role === 'plaza') navigate('/plaza/dashboard');
+    if (selected.role === 'bank')  navigate('/bank/dashboard');
+    if (selected.role === 'admin') navigate('/ihmcl/dashboard');
     window.location.reload();       //update this logic for production - this is just to ensure all components re-read the user from localStorage
   };
 

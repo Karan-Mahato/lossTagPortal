@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { DataTable } from '../components/ui/Table.jsx';
@@ -16,6 +16,8 @@ function IHMCLDashboard() {
   const [page, setPage] = useState(1);
   const pageSize = 7;
   const [selected, setSelected] = useState(null);
+  const [bankFilter, setBankFilter] = useState('');
+  const [plazaFilter, setPlazaFilter] = useState('');
   const notifications = useNotifications({ role: 'admin', userId: 'admin' });
 
   useEffect(() => {
@@ -32,7 +34,38 @@ function IHMCLDashboard() {
     fetchComplaints();
   }, []);
 
+  const bankOptions = useMemo(() => {
+    const map = new Map();
+    for (const c of complaints) {
+      const id = c.assigned_bank_id;
+      const label = c.issuer_banks?.name || 'Unmapped';
+      const key = id ?? '__unmapped__';
+      if (!map.has(key)) map.set(key, { value: id ?? '__unmapped__', label });
+    }
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [complaints]);
+
+  const plazaOptions = useMemo(() => {
+    const map = new Map();
+    for (const c of complaints) {
+      const id = c.toll_plaza_id;
+      if (!id) continue;
+      const label = c.toll_plazas?.name || c.toll_plazas?.plaza_code || 'Unknown plaza';
+      if (!map.has(id)) map.set(id, { value: id, label });
+    }
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [complaints]);
+
   const filtered = complaints
+    .filter((c) => {
+      if (!bankFilter) return true;
+      if (bankFilter === '__unmapped__') return !c.assigned_bank_id;
+      return c.assigned_bank_id === bankFilter;
+    })
+    .filter((c) => {
+      if (!plazaFilter) return true;
+      return c.toll_plaza_id === plazaFilter;
+    })
     .filter((c) => {
       if (status === 'All') return true;
       return c.status === status;
@@ -61,7 +94,7 @@ function IHMCLDashboard() {
 
   useEffect(() => {
     setPage(1);
-  }, [query, status]);
+  }, [query, status, bankFilter, plazaFilter]);
 
   const columns = [
     { key: 'case', header: 'Case ID', cell: (c) => <span className="font-mono">{c.case_id}</span> },
@@ -87,14 +120,43 @@ function IHMCLDashboard() {
       activeSidebarLabel="Reports"
       userName="IHMCL"
       subtitle="Monitor all complaints across the network."
-      sidebarItems={[{ label: 'Reports', icon: 'report', to: '/ihmcl' }]}
-      topbar={{ showNotifications: true, showCalendar: true }}
+      sidebarItems={[
+        { label: 'Dashboard', icon: 'grid', to: '/ihmcl/dashboard' },
+        { label: 'Reports', icon: 'report', to: '/ihmcl/reports' },
+      ]}
+      topbar={{ showNotifications: true }}
       notifications={notifications}
     >
       <section className="stl-panel" aria-label="Admin complaints table">
         <div className="stl-panel__header">
           <div className="stl-panel__title">All Complaints</div>
-          <div className="stl-panel__toolbar">
+          <div className="stl-panel__toolbar stl-panel__toolbar--wrap">
+            <select
+              className="stl-select"
+              value={bankFilter}
+              onChange={(e) => setBankFilter(e.target.value)}
+              aria-label="Filter by bank"
+            >
+              <option value="">All banks</option>
+              {bankOptions.map((o) => (
+                <option key={String(o.value)} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="stl-select"
+              value={plazaFilter}
+              onChange={(e) => setPlazaFilter(e.target.value)}
+              aria-label="Filter by toll plaza"
+            >
+              <option value="">All plazas</option>
+              {plazaOptions.map((o) => (
+                <option key={String(o.value)} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
             <input
               className="stl-input"
               value={query}

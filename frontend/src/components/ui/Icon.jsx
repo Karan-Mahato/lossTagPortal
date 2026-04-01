@@ -163,11 +163,9 @@ export function Icon({ name, size = 18, className = '' }) {
     case 'logout':
       return (
         <svg {...props} {...common}>
-          <path d="M10 17l-1 0a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h1" />
-          <path d="M15 12H7" />
-          <path d="m15 12-3-3" />
-          <path d="m15 12-3 3" />
-          <path d="M19 4v16" />
+          <path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+          <path d="M14 8l4 4-4 4" />
+          <path d="M18 12H8" />
         </svg>
       );
     default:

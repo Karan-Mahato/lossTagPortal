@@ -50,6 +50,7 @@ export default function SubmitComplaint() {
   };
 
   const sidebarItems = [
+    { label: 'Dashboard', icon: 'grid', to: '/plaza/dashboard' },
     { label: 'Submit Complaint', icon: 'plus', to: '/plaza/submit' },
     { label: 'Reports', icon: 'report', to: '/plaza/reports' },
   ];

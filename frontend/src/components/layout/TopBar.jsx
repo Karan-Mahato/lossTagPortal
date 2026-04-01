@@ -6,7 +6,6 @@ export function TopBar({
   userName = 'User',
   subtitle = '',
   showNotifications = false,
-  showCalendar = false,
   notifications,
 }) {
   const [open, setOpen] = React.useState(false);
@@ -31,7 +30,6 @@ export function TopBar({
               onClick={() => setOpen(true)}
             />
           ) : null}
-          {showCalendar ? <IconButton label="Calendar" icon="calendar" /> : null}
         </div>
       </div>
 
