@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import axios from 'axios';
+import { apiGet, apiPost } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { DataTable } from '../components/ui/Table.jsx';
@@ -28,8 +28,8 @@ function TollPlazaDashboard() {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?plaza_id=${user.id}`);
-      setComplaints(res.data || []);
+      const res = await apiGet(`/complaints?plaza_id=${user?.plaza_id}`);
+      setComplaints(res || []);
     } catch (err) {
       setComplaints([]);
     }
@@ -50,12 +50,12 @@ function TollPlazaDashboard() {
     setSubmitting(true);
     try {
       const imageUrl = await uploadImage(form.image);
-      await axios.post(`${import.meta.env.VITE_API_URL}/complaints`, {
+      await apiPost(`/complaints`, {
         fastag_id: form.fastag_id,
         vrn: form.vrn,
         lane_id: form.lane_id,
         crossing_datetime: form.crossing_datetime,
-        toll_plaza_id: user.id,
+        toll_plaza_id: user?.plaza_id,
         image_url: imageUrl
       });
       setForm({ fastag_id: '', vrn: '', lane_id: '', crossing_datetime: '', image: null });

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { apiGet } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { StatusPill } from '../components/ui/Pill.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -15,21 +15,23 @@ export default function PlazaDashboard() {
   const user = JSON.parse(localStorage.getItem('fastag_user'));
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const notifications = useNotifications({ role: 'plaza', userId: user?.id });
+  const notifications = useNotifications({ role: 'PLAZA', userId: user?.plaza_id });
 
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?plaza_id=${user.id}`);
-        setComplaints(res.data || []);
+        const res = await apiGet(`/complaints?plaza_id=${user?.plaza_id}`);
+        setComplaints(res || []);
       } catch {
         setComplaints([]);
       }
       setLoading(false);
     };
-    fetchComplaints();
-  }, [user.id]);
+    if (user?.plaza_id) {
+      fetchComplaints();
+    }
+  }, [user?.plaza_id]);
 
   const metrics = useMemo(() => {
     const total = complaints.length;

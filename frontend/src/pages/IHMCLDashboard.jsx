@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { apiGet, apiPatch } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { DataTable } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
@@ -18,14 +18,14 @@ function IHMCLDashboard() {
   const [selected, setSelected] = useState(null);
   const [bankFilter, setBankFilter] = useState('');
   const [plazaFilter, setPlazaFilter] = useState('');
-  const notifications = useNotifications({ role: 'admin', userId: 'admin' });
+  const notifications = useNotifications({ role: 'IHMCL', userId: 'admin' });
 
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints`);
-        setComplaints(res.data || []);
+        const res = await apiGet(`/complaints`);
+        setComplaints(res || []);
       } catch (err) {
         setComplaints([]);
       }

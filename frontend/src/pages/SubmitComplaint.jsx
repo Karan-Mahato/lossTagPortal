@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { supabase } from '../lib/supabase.js';
+import { apiPost } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { FilePicker } from '../components/ui/FilePicker.jsx';
@@ -17,7 +17,7 @@ export default function SubmitComplaint() {
     image: null,
   });
   const [submitting, setSubmitting] = useState(false);
-  const notifications = useNotifications({ role: 'plaza', userId: user?.id });
+  const notifications = useNotifications({ role: 'PLAZA', userId: user?.plaza_id });
 
   const uploadImage = async (file) => {
     const path = `complaints/${Date.now()}-${file.name}`;
@@ -28,23 +28,42 @@ export default function SubmitComplaint() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.image) return;
+    if (!form.image) {
+      alert('Please select an image');
+      return;
+    }
     setSubmitting(true);
     try {
+      console.log('📤 Uploading image...');
       const imageUrl = await uploadImage(form.image);
+      console.log('✅ Image uploaded:', imageUrl);
+      
       const crossing_datetime = `${form.crossing_date}T${form.crossing_time}`;
-      await axios.post(`${import.meta.env.VITE_API_URL}/complaints`, {
+      
+      console.log('📝 Submitting complaint with data:', {
         fastag_id: form.fastag_id,
         vrn: form.vrn,
         lane_id: form.lane_id,
         crossing_datetime,
-        toll_plaza_id: user.id,
+        toll_plaza_id: user.plaza_id,
         image_url: imageUrl,
       });
+      
+      await apiPost('/complaints', {
+        fastag_id: form.fastag_id,
+        vrn: form.vrn,
+        lane_id: form.lane_id,
+        crossing_datetime,
+        toll_plaza_id: user.plaza_id,
+        image_url: imageUrl,
+      });
+      
+      console.log('✅ Complaint submitted successfully');
       setForm({ fastag_id: '', vrn: '', lane_id: '', crossing_date: '', crossing_time: '', image: null });
-      alert('Complaint submitted.');
+      alert('Complaint submitted successfully.');
     } catch (err) {
-      alert('Failed to submit complaint.');
+      console.error('❌ Error submitting complaint:', err);
+      alert(`Failed to submit complaint: ${err.message}`);
     }
     setSubmitting(false);
   };

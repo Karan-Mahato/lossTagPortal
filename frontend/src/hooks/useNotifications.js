@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
+import { apiGet } from '../lib/apiClient.js';
 
 function storageKey(role, userId) {
   return `fastag_notifications:${role}:${userId}`;
@@ -32,10 +32,9 @@ function formatTs(iso) {
 }
 
 function buildComplaintUrl(role, userId) {
-  const base = `${import.meta.env.VITE_API_URL}/complaints`;
-  if (role === 'plaza') return `${base}?plaza_id=${userId}`;
-  if (role === 'bank') return `${base}?bank_id=${userId}`;
-  return base;
+  if (role === 'PLAZA') return `/complaints?plaza_id=${userId}`;
+  if (role === 'BANK') return `/complaints?bank_id=${userId}`;
+  return '/complaints';
 }
 
 function toSnapshot(c) {
@@ -100,40 +99,46 @@ export function useNotifications({ role, userId, pollMs = 15000 }) {
   const refresh = useCallback(async () => {
     if (!role || !userId) return;
 
-    const state = readState(role, userId);
-    const prevSnapshot = state.snapshot || {};
-    const prevRead = state.read || {};
+    try {
+      const state = readState(role, userId);
+      const prevSnapshot = state.snapshot || {};
+      const prevRead = state.read || {};
 
-    const url = buildComplaintUrl(role, userId);
-    const res = await axios.get(url);
-    const complaints = res.data || [];
+      const endpoint = buildComplaintUrl(role, userId);
+      console.log('📋 Fetching complaints from:', endpoint);
+      
+      const complaints = await apiGet(endpoint);
+      console.log('✅ Complaints fetched:', complaints.length);
 
-    const nextSnapshot = {};
-    const nextItems = [];
-    for (const c of complaints) {
-      nextSnapshot[c.id] = toSnapshot(c);
-      nextItems.push(...diffToNotifications(prevSnapshot, c));
+      const nextSnapshot = {};
+      const nextItems = [];
+      for (const c of complaints) {
+        nextSnapshot[c.id] = toSnapshot(c);
+        nextItems.push(...diffToNotifications(prevSnapshot, c));
+      }
+
+      // Merge: keep previous notifications, plus newly generated ones
+      const merged = [...(state.items || []), ...nextItems]
+        .filter(Boolean)
+        .reduce((acc, n) => {
+          acc.set(n.id, n);
+          return acc;
+        }, new Map());
+
+      const mergedItems = Array.from(merged.values()).sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+      const nextState = {
+        snapshot: nextSnapshot,
+        read: prevRead,
+        items: mergedItems.slice(0, 50), // cap
+      };
+      writeState(role, userId, nextState);
+
+      setItems(nextState.items);
+      setReadMap(nextState.read);
+    } catch (err) {
+      console.error('❌ Error fetching notifications:', err);
     }
-
-    // Merge: keep previous notifications, plus newly generated ones
-    const merged = [...(state.items || []), ...nextItems]
-      .filter(Boolean)
-      .reduce((acc, n) => {
-        acc.set(n.id, n);
-        return acc;
-      }, new Map());
-
-    const mergedItems = Array.from(merged.values()).sort((a, b) => new Date(b.ts) - new Date(a.ts));
-
-    const nextState = {
-      snapshot: nextSnapshot,
-      read: prevRead,
-      items: mergedItems.slice(0, 50), // cap
-    };
-    writeState(role, userId, nextState);
-
-    setItems(nextState.items);
-    setReadMap(nextState.read);
   }, [role, userId]);
 
   useEffect(() => {

@@ -1,28 +1,57 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../lib/authService.js';
 import { Button } from '../components/ui/Button.jsx';
 
-// Replace each UUID with the actual value from your Supabase Table Editor
-const DEMO_USERS = [
-  { label: 'Toll Plaza — DME-001',  role: 'plaza', id: '260a64bd-b3af-405c-934f-187dcec4f3bd' },
-  { label: 'Toll Plaza — NH48-GGN', role: 'plaza', id: '06abec52-43b2-439b-b230-ef5e913e5e7b' },
-  { label: 'ICICI Bank',             role: 'bank',  id: '3f8bedaf-22d0-4309-86e1-a85df3025671' },
-  { label: 'HDFC Bank',              role: 'bank',  id: 'c475f659-988c-4e9c-b1b4-f909645e2eeb' },
-  { label: 'State Bank of India',    role: 'bank',  id: '0306c341-b672-49e0-8ff0-6bcd4319cb91' },
-  { label: 'Axis Bank',              role: 'bank',  id: '1597ce7d-2799-40e3-ba98-595cf7d8f7f3' },
-  { label: 'IHMCL Admin',            role: 'admin', id: 'admin' },
-];
-
 export default function Login() {
-  const [selected, setSelected] = useState(DEMO_USERS[0]);
+  const [username, setUsername] = useState('admin_ihmcl');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    localStorage.setItem('fastag_user', JSON.stringify(selected));
-    if (selected.role === 'plaza') navigate('/plaza/dashboard');
-    if (selected.role === 'bank')  navigate('/bank/dashboard');
-    if (selected.role === 'admin') navigate('/ihmcl/dashboard');
-    window.location.reload();       //update this logic for production - this is just to ensure all components re-read the user from localStorage
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      console.log('📝 Attempting login...');
+      const data = await authService.login(username, password);
+      
+      console.log('✅ Login response received:', data);
+      console.log('📊 User role:', data.user.role);
+      console.log('💾 Checking localStorage...');
+      
+      // Verify data was stored
+      const storedUser = JSON.parse(localStorage.getItem('fastag_user'));
+      const storedToken = localStorage.getItem('token');
+      console.log('✓ Stored user:', storedUser);
+      console.log('✓ Stored token:', storedToken ? '(exists)' : '(missing)');
+      
+      // Route based on role
+      const role = data.user.role;
+      console.log(`🚀 Redirecting based on role: ${role}`);
+      
+      if (role === 'PLAZA') {
+        console.log('➡️  Navigating to /plaza/dashboard');
+        navigate('/plaza/dashboard');
+      } else if (role === 'BANK') {
+        console.log('➡️  Navigating to /bank/dashboard');
+        navigate('/bank/dashboard');
+      } else if (role === 'IHMCL') {
+        console.log('➡️  Navigating to /ihmcl/dashboard');
+        navigate('/ihmcl/dashboard');
+      } else {
+        console.log('⚠️  Unknown role, redirecting to home');
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('❌ Login error:', err);
+      setError(err.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,26 +70,56 @@ export default function Login() {
           </div>
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' }}>FASTag Portal</div>
-            <div className="stl-subtitle">Choose a role to preview the dashboards.</div>
+            <div className="stl-subtitle">Login with your credentials</div>
           </div>
         </div>
 
-        <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
-          <select
-            className="stl-select"
-            value={selected.label}
-            onChange={(e) => setSelected(DEMO_USERS.find((u) => u.label === e.target.value))}
-            aria-label="Select demo user"
-            style={{ height: 40 }}
-          >
-            {DEMO_USERS.map((u) => (
-              <option key={u.label}>{u.label}</option>
-            ))}
-          </select>
+        <form onSubmit={handleLogin} style={{ marginTop: 14, display: 'grid', gap: 10 }}>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="stl-input"
+            style={{ padding: '10px 12px', borderRadius: 8 }}
+            disabled={isLoading}
+          />
 
-          <Button onClick={handleLogin} style={{ height: 40, justifyContent: 'center' }}>
-            Login
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="stl-input"
+            style={{ padding: '10px 12px', borderRadius: 8 }}
+            disabled={isLoading}
+          />
+
+          {error && (
+            <div style={{ color: '#d32f2f', fontSize: 14, padding: '10px 12px' }}>
+              ❌ {error}
+            </div>
+          )}
+
+          <Button 
+            type="submit"
+            disabled={isLoading}
+            style={{ 
+              height: 40, 
+              justifyContent: 'center',
+              opacity: isLoading ? 0.6 : 1,
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isLoading ? 'Logging in...' : 'Login'}
           </Button>
+        </form>
+
+        <div style={{ marginTop: 20, fontSize: 12, color: '#666', borderTop: '1px solid #e0e0e0', paddingTop: 14 }}>
+          <p style={{ margin: '0 0 8px 0' }}>📋 <strong>Test Credentials:</strong></p>
+          <p style={{ margin: 4 }}>admin_ihmcl / admin@123</p>
+          <p style={{ margin: 4 }}>plaza_dme001 / plaza@123</p>
+          <p style={{ margin: 4 }}>bank_icici / bank@123</p>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { apiGet, apiPatch } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { DataTable } from '../components/ui/Table.jsx';
@@ -19,7 +19,7 @@ function BankDashboard() {
   const pageSize = 7;
   const [selected, setSelected] = useState(null);
   const [plazaFilter, setPlazaFilter] = useState('');
-  const notifications = useNotifications({ role: 'bank', userId: user?.id });
+  const notifications = useNotifications({ role: 'BANK', userId: user?.bank_id });
 
   useEffect(() => {
     fetchComplaints();
@@ -29,8 +29,8 @@ function BankDashboard() {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?bank_id=${user.id}`);
-      setComplaints(res.data || []);
+      const res = await apiGet(`/complaints?bank_id=${user?.bank_id}`);
+      setComplaints(res || []);
     } catch (err) {
       setComplaints([]);
     }
@@ -42,8 +42,8 @@ function BankDashboard() {
       alert('Please provide a reason for this action.');
       return;
     }
-    await axios.patch(
-      `${import.meta.env.VITE_API_URL}/complaints/${complaintId}`,
+    await apiPatch(
+      `/complaints/${complaintId}`,
       { status, bank_action_reason: reason }
     );
     fetchComplaints();

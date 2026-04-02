@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { apiGet } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { StatusPill } from '../components/ui/Pill.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -8,21 +8,21 @@ export default function BankMetricsDashboard() {
   const user = JSON.parse(localStorage.getItem('fastag_user'));
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const notifications = useNotifications({ role: 'bank', userId: user?.id });
+  const notifications = useNotifications({ role: 'BANK', userId: user?.bank_id });
 
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?bank_id=${user.id}`);
-        setComplaints(res.data || []);
+        const res = await apiGet(`/complaints?bank_id=${user?.bank_id}`);
+        setComplaints(res || []);
       } catch {
         setComplaints([]);
       }
       setLoading(false);
     };
     fetchComplaints();
-  }, [user.id]);
+  }, [user?.bank_id]);
 
   const metrics = useMemo(() => {
     const total = complaints.length;

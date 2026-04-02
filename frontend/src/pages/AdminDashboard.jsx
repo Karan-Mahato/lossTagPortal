@@ -1,19 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { apiGet } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 
 export default function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const notifications = useNotifications({ role: 'admin', userId: 'admin' });
+  const notifications = useNotifications({ role: 'IHMCL', userId: 'admin' });
 
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints`);
-        setComplaints(res.data || []);
+        const res = await apiGet(`/complaints`);
+        setComplaints(res || []);
       } catch {
         setComplaints([]);
       }

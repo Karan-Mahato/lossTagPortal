@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { apiGet } from '../lib/apiClient.js';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { DataTable } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
@@ -17,21 +17,21 @@ export default function PlazaReports() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const pageSize = 7;
-  const notifications = useNotifications({ role: 'plaza', userId: user?.id });
+  const notifications = useNotifications({ role: 'PLAZA', userId: user?.plaza_id });
 
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints?plaza_id=${user.id}`);
-        setComplaints(res.data || []);
+        const res = await apiGet(`/complaints?plaza_id=${user?.plaza_id}`);
+        setComplaints(res || []);
       } catch {
         setComplaints([]);
       }
       setLoading(false);
     };
     fetchComplaints();
-  }, [user.id]);
+  }, [user?.plaza_id]);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: 'grid', to: '/plaza/dashboard' },

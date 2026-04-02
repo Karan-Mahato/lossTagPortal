@@ -5,6 +5,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed:base": "node scripts/seedBaseTables.js",
+    "seed:users": "node scripts/seedUsers.js",
+    "seed": "npm run seed:base && npm run seed:users",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,9 +17,11 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.99.3",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
     "uuid": "^13.0.0"
   }
 }
